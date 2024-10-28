@@ -1,53 +1,63 @@
-import { Router } from "express";
-import { users } from "../util/MockupUsers.js";
-const router = Router();
-router.get("/api/users", (req, res) => {
-  res.status(200).send(users);
+import { Router } from "express"; // Importing Router from Express framework
+import { User } from "../mongoose/schemas/user.js"; // Importing User model from Mongoose schemas
+const router = Router(); // Creating an instance of the Router
+
+// GET ALL USERS IN DATABASE
+router.get("/api/users", async (req, res) => {
+  try {
+    // Fetch all users from the database
+    const users = await User.find();
+    res.status(200).json(users); // Send a successful response with the list of users
+  } catch (error) {
+    console.log(`ERROR: ${error}`); // Log any errors that occur
+  }
 });
 
-router.get("/api/users/:id", (req, res) => {
-  const userID = parseInt(req.params.id);
+// GET SPECIFIC USERS IN DATABASE USING ID
+router.get("/api/users/:id", async (req, res) => {
+  const userID = req.params.id; // Extract user ID from request parameters
+  const user = await User.findById(userID); // Find the user by ID
 
-  const user = users.find((user) => user.id === userID);
-
+  // If user is not found, return a 400 status with a message
   if (!user) {
     return res.status(400).send({ Message: "User Not Found" });
   }
 
-  res.status(200).send(user);
+  res.status(200).json(user); // Send the found user as a response
 });
 
-router.post("/api/users", (req, res) => {
-  const { body } = req;
+// POST USERS TO DATABASE
+router.post("/api/users", async (req, res) => {
+  const { body } = req; // Get the request body
 
-  const newId = users.length > 0 ? users[users.length - 1].id + 1 : 1;
+  try {
+    // Create a new user instance
+    const newUser = new User(body);
+    const saveUser = await newUser.save(); // Save the user to the database
 
-  const newUser = { id: newId, ...body };
+    return res.status(201).send(saveUser); // Send a 201 response for resource creation
+  } catch (error) {
+    console.log(`ERROR: ${error}`); // Log any errors that occur
+    res.sendStatus(401); // Send a 401 status in case of an error
+  }
 
-  users.push(newUser);
-
-  res.status(200).json("ADD SUCESSFULLy");
+  res.status(200).json("ADD SUCESSFULLY"); // This line is unreachable due to the return statement above
 });
 
-router.delete("/api/users/:id", (req, res) => {
-  const userID = parseInt(req.params.id);
-
-  const userIndex = users.findIndex((user) => user.id === userID);
-
-  users.splice(userIndex, 1);
-
-  res.status(200).json({ Message: "Delete Sucessfully" });
+// DELETE USERS IN DATABASE
+router.delete("/api/users/:id", async (req, res) => {
+  const userID = req.params.id; // Extract user ID from request parameters
+  const user = await User.findByIdAndDelete(userID); // Delete the user by ID
+  res.status(200).json({ Message: "Delete Sucessfully" }); // Send a success message
 });
 
-router.patch("/api/users/:id", (req, res) => {
-  const { body } = req;
-  const userID = parseInt(req.params.id);
+// UPDATE USERS IN DATABASE
+router.patch("/api/users/:id", async (req, res) => {
+  const { body } = req; // Get the request body
+  const userID = req.params.id; // Extract user ID from request parameters
 
-  const userIndex = users.findIndex((user) => user.id === userID);
-
-  users[userIndex] = { ...users[userIndex], ...body };
-
-  res.status(200).json({ Message: "Update Sucessfully", user: users[userIndex] });
+  const user = await User.findByIdAndUpdate(userID, body); // Update the user with the new data
+  res.status(200).json({ Message: "Update Sucessfully", user: user }); // Send the updated user as a response
 });
 
-export default router;
+export default router; // Export the router to be used in other parts of the application
