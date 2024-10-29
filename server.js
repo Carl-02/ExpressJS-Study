@@ -4,6 +4,7 @@ import AuthRouter from "./routes/auth.js";
 import session from "express-session";
 import passport from "passport";
 import mongoose from "mongoose";
+import MongoStore from "connect-mongo";
 import "./strategies/local-strategy.js";
 
 mongoose
@@ -18,11 +19,14 @@ app.use(express.json());
 app.use(
   session({
     secret: "carl",
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     cookie: {
-      maxAge: 60000,
+      maxAge: 60000 * 60,
     },
+    store: MongoStore.create({
+      client: mongoose.connection.getClient(),
+    }),
   })
 );
 
