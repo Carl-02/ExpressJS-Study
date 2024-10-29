@@ -1,6 +1,7 @@
 import passport from "passport"; // Importing Passport for authentication
 import { Strategy } from "passport-local"; // Importing Local Strategy for username/password authentication
 import { User } from "../mongoose/schemas/user.js"; // Importing User model from Mongoose schemas
+import { comparePass } from "../util/hashPassword.js";
 
 // Serialize user to store user ID in the session
 passport.serializeUser((user, done) => {
@@ -29,7 +30,7 @@ export default passport.use(
     try {
       const findUser = await User.findOne({ username }); // Find user by username
       if (!findUser) throw new Error("USER NOT FOUND"); // Throw error if user not found
-      if (findUser.password !== password) throw new Error("INVALID CREDENTIALS"); // Check if the password matches
+      if (!comparePass(password, findUser.password)) throw new Error("INVALID CREDENTIALS"); // Check if the password matches
 
       done(null, findUser); // Authentication successful, return the user object
     } catch (error) {

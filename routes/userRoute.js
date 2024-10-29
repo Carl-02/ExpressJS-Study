@@ -1,5 +1,6 @@
 import { Router } from "express"; // Importing Router from Express framework
 import { User } from "../mongoose/schemas/user.js"; // Importing User model from Mongoose schemas
+import { hashPassword } from "../util/hashPassword.js";
 const router = Router(); // Creating an instance of the Router
 
 // GET ALL USERS IN DATABASE
@@ -31,8 +32,10 @@ router.post("/api/users", async (req, res) => {
   const { body } = req; // Get the request body
 
   try {
+    const hashpass = await hashPassword(body.password);
+
     // Create a new user instance
-    const newUser = new User(body);
+    const newUser = new User({ ...body, password: hashpass });
     const saveUser = await newUser.save(); // Save the user to the database
 
     return res.status(201).send(saveUser); // Send a 201 response for resource creation
